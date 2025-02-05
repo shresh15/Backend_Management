@@ -1,6 +1,8 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { ApiError } from "../utils/ApiError.js";
+import { User } from "../models/user.model.js";
 const registerUser = asyncHandler((req, res, next) => {
-  /*1. get user details from frontend
+  /* 1. get user details from frontend
   2.validation - not empty
   3.check if user already exists: username, email
   4.check for images, check for avatar
@@ -8,10 +10,32 @@ const registerUser = asyncHandler((req, res, next) => {
   6.create user object- create entry in db
   7.remove password and refresh token field from response
   8.check for user creation
-  9.return res
+
+  //9.return res
   */
   const { fullName, email, username, password } = req.body;
   console.log("email", email);
+
+  //   if(fullName ==="") throw new ApiError("400", "fullname is required");
+  // });
+  if (
+    [fullName, email, username, password].some((field) => field?.trim() === "")
+  ) {
+    throw new ApiError(400, " All fields are required");
+  }
+
+  const existedUser = User.findOne({
+    $or: [{ username }, { email }],
+  });
+  if (existedUser) {
+    throw new ApiError(409, "User with email or username already exists");
+  }
+  const avatarLocalPath = req.files?.avatar[0]?.path;
+  const CoverImageLocalPath = req.files?.coverImage[0]?.path;
+
+  if (!avatarLocalPath) {
+    throw new ApiError("400", "Avatar is required");
+  }
 });
 
 export { registerUser };
